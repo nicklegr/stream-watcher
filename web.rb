@@ -37,6 +37,10 @@ get "/api/v1/mildom/:user_id" do
   end
 
   body = data["body"]
+
+  # 公開ライブは11
+  # オフラインは13
+  # TODO: サブスク限定ライブ時の値を確認
   online = body["anchor_live"] != 13
 
   ret = {
