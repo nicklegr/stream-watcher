@@ -102,7 +102,10 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   {
     "online" => true,
     "user_id" => user_id,
+    "screen_name" => space_metadata["creator_results"]["result"]["legacy"]["screen_name"],
     "space_id" => space_id,
     "media_key" => media_key,
+    "live_title" => space_metadata["title"],
+    "space_metadata" => space_metadata,
   }.to_json
 end
