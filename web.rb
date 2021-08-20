@@ -8,6 +8,7 @@ require "sinatra/url_for"
 require "open-uri"
 require "dotenv"
 require_relative "https"
+require_relative "twitter_space"
 
 Dotenv.load
 
@@ -54,4 +55,54 @@ get "/api/v1/mildom/:user_id" do
 
   content_type "application/json"
   ret.to_json
+end
+
+get "/api/v1/twitter_space/:id_type/:name_or_id" do
+  content_type "application/json"
+
+  id_type = params[:id_type]
+
+  space = TwitterSpace.new
+  token = space.guest_token()
+
+  user_id =
+    if id_type == "screen_name"
+      screen_name = params[:name_or_id]
+      user = space.user_by_screen_name(token, screen_name)
+      user["data"]["user"]["rest_id"]
+    else
+      params[:name_or_id]
+    end
+
+  tweets = space.user_tweets(token, user_id)
+
+  # TODO: ツイートで告知していない場合はこれだと検出できない
+  match = tweets.to_json.match(%q|https://twitter.com/i/spaces/(\w+)|)
+  if match
+    space_id = match[1]
+  else
+    return {
+      "online" => false,
+      "user_id" => user_id,
+    }.to_json
+  end
+
+  audio_space = space.audio_space_by_id(token, space_id)
+
+  space_metadata = audio_space["data"]["audioSpace"]["metadata"]
+  if space_metadata["state"] == "Ended"
+    return {
+      "online" => false,
+      "user_id" => user_id,
+    }.to_json
+  end
+
+  media_key = space_metadata["media_key"]
+
+  {
+    "online" => true,
+    "user_id" => user_id,
+    "space_id" => space_id,
+    "media_key" => media_key,
+  }.to_json
 end
