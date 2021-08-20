@@ -90,7 +90,7 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   audio_space = space.audio_space_by_id(token, space_id)
 
   space_metadata = audio_space["data"]["audioSpace"]["metadata"]
-  if space_metadata["state"] == "Ended"
+  if space_metadata["state"] != "Running"
     return {
       "online" => false,
       "user_id" => user_id,
