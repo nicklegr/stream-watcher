@@ -91,13 +91,14 @@ class TwitterSpace
     get_json("https://twitter.com/i/api/graphql/s1e2ZkWQYDRvGzCqA66MJQ/AudioSpaceById", header, params)
   end
 
-  def avatar_content(guest_token, user_id)
+  # user_idsは配列で複数指定できる。配信中のidのみが結果の"users"のキーに含まれる
+  def avatar_content(guest_token, user_ids)
     header = common_header(guest_token).merge({
       "Cookie" => "auth_token=#{ENV["AUTH_TOKEN"]}"
     })
 
     params = {
-      "user_ids" => user_id,
+      "user_ids" => user_ids.join(","),
       "only_spaces" => true,
     }
 
@@ -131,7 +132,7 @@ if $0 == __FILE__
   user_id = user["data"]["user"]["rest_id"]
   puts "user_id: #{user_id}"
 
-  content = space.avatar_content(token, user_id)
+  content = space.avatar_content(token, [ user_id ])
   if content["users"].size > 0
     space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
     puts "space_id: #{space_id}"
