@@ -74,7 +74,7 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       params[:name_or_id]
     end
 
-  content = space.avatar_content(token, user_id)
+  content = space.avatar_content(token, [ user_id ])
   if content["users"].size > 0
     space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
   else
