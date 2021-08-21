@@ -74,12 +74,9 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       params[:name_or_id]
     end
 
-  tweets = space.user_tweets(token, user_id)
-
-  # TODO: ツイートで告知していない場合はこれだと検出できない
-  match = tweets.to_json.match(%q|https://twitter.com/i/spaces/(\w+)|)
-  if match
-    space_id = match[1]
+  content = space.avatar_content(token, user_id)
+  if content["users"].size > 0
+    space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
   else
     return {
       "online" => false,
