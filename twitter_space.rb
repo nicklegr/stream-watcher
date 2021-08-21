@@ -91,6 +91,19 @@ class TwitterSpace
     get_json("https://twitter.com/i/api/graphql/s1e2ZkWQYDRvGzCqA66MJQ/AudioSpaceById", header, params)
   end
 
+  def avatar_content(guest_token, user_id)
+    header = common_header(guest_token).merge({
+      "Cookie" => "auth_token=#{ENV["AUTH_TOKEN"]}"
+    })
+
+    params = {
+      "user_ids" => user_id,
+      "only_spaces" => true,
+    }
+
+    get_json("https://twitter.com/i/api/fleets/v1/avatar_content", header, params)
+  end
+
   def live_video_stream(guest_token, media_key)
     header = common_header(guest_token).merge({
       "Cookie" => "auth_token=#{ENV["AUTH_TOKEN"]}"
@@ -118,13 +131,9 @@ if $0 == __FILE__
   user_id = user["data"]["user"]["rest_id"]
   puts "user_id: #{user_id}"
 
-  tweets = space.user_tweets(token, user_id)
-# pp tweets
-
-  # TODO: ツイートで告知していない場合はこれだと検出できない
-  match = tweets.to_json.match(%q|https://twitter.com/i/spaces/(\w+)|)
-  if match
-    space_id = match[1]
+  content = space.avatar_content(token, user_id)
+  if content["users"].size > 0
+    space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
     puts "space_id: #{space_id}"
   else
     puts "space offline"
