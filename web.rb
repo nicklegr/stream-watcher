@@ -96,6 +96,9 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
 
   media_key = space_metadata["media_key"]
 
+  stream = space.live_video_stream(token, media_key)
+  stream_url = stream["source"]["location"]
+
   {
     "online" => true,
     "user_id" => user_id,
@@ -103,6 +106,7 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     "space_id" => space_id,
     "media_key" => media_key,
     "live_title" => space_metadata["title"],
+    "stream_url" => stream_url,
     "space_metadata" => space_metadata,
   }.to_json
 end
