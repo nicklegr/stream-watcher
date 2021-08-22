@@ -57,7 +57,7 @@ get "/api/v1/mildom/:user_id" do
   ret.to_json
 end
 
-get "/api/v1/twitter_space/bulk_check" do
+post "/api/v1/twitter_space/bulk_check" do
   body = JSON.parse(request.body.read)
 
   space = TwitterSpace.new
