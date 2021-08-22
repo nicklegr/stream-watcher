@@ -57,6 +57,52 @@ get "/api/v1/mildom/:user_id" do
   ret.to_json
 end
 
+get "/api/v1/twitter_space/bulk_check" do
+  body = JSON.parse(request.body.read)
+
+  space = TwitterSpace.new
+  token = space.guest_token()
+
+  spaces = []
+  body["user_ids"].each_slice(100) do |slice|
+    content = space.avatar_content(token, slice)
+    spaces += content["users"].values
+  end
+
+  # 複数のユーザーが同じスペースにいる場合があるのでuniq
+  spaces.uniq!{|e| e["spaces"]["live_content"]["audiospace"]["broadcast_id"]}
+
+  space_ids = spaces.map{|e| e["spaces"]["live_content"]["audiospace"]["broadcast_id"]}
+
+  results = space_ids.map do |space_id|
+    audio_space = space.audio_space_by_id(token, space_id)
+
+    space_metadata = audio_space["data"]["audioSpace"]["metadata"]
+    if space_metadata["state"] != "Running"
+      nil
+    else
+      media_key = space_metadata["media_key"]
+
+      stream = space.live_video_stream(token, media_key)
+      stream_url = stream["source"]["location"]
+
+      {
+        "online" => true,
+        "user_id" => space_metadata["creator_results"]["result"]["rest_id"],
+        "screen_name" => space_metadata["creator_results"]["result"]["legacy"]["screen_name"],
+        "space_id" => space_id,
+        "media_key" => media_key,
+        "live_title" => space_metadata["title"],
+        "stream_url" => stream_url,
+        "space_metadata" => space_metadata,
+      }
+    end
+  end
+
+  content_type "application/json"
+  results.compact.to_json
+end
+
 get "/api/v1/twitter_space/:id_type/:name_or_id" do
   content_type "application/json"
 

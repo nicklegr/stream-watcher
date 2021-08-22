@@ -92,6 +92,11 @@ class TwitterSpace
   end
 
   # user_idsは配列で複数指定できる。配信中のidのみが結果の"users"のキーに含まれる
+  # 100件以内。それ以上だと400 Bad Requestが返る
+  #
+  # ユーザーがホスト・共同ホスト・スピーカーの場合のみavatar_contentの結果に含まれる
+  # リスナーの場合は含まれない
+  # ホストは admin_twitter_user_ids で確認できる。それ以外は区別できない感じ
   def avatar_content(guest_token, user_ids)
     header = common_header(guest_token).merge({
       "Cookie" => "auth_token=#{ENV["AUTH_TOKEN"]}"
@@ -128,11 +133,12 @@ if $0 == __FILE__
   puts "guest_token: #{token}"
 
   user = space.user_by_screen_name(token, screen_name)
-  # pp user
+# pp user
   user_id = user["data"]["user"]["rest_id"]
   puts "user_id: #{user_id}"
 
   content = space.avatar_content(token, [ user_id ])
+# pp content
   if content["users"].size > 0
     space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
     puts "space_id: #{space_id}"
@@ -145,6 +151,7 @@ if $0 == __FILE__
 # pp audio_space
 
   space_metadata = audio_space["data"]["audioSpace"]["metadata"]
+# pp space_metadata
   if space_metadata["state"] == "Ended"
     puts "space ended"
     exit(0)
@@ -154,6 +161,7 @@ if $0 == __FILE__
   puts "media_key: #{media_key}"
 
   stream = space.live_video_stream(token, media_key)
+# pp stream
   url = stream["source"]["location"]
   puts "url: #{url}"
 end
