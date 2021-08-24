@@ -97,6 +97,8 @@ class TwitterSpace
   # ユーザーがホスト・共同ホスト・スピーカーの場合のみavatar_contentの結果に含まれる
   # リスナーの場合は含まれない
   # ホストは admin_twitter_user_ids で確認できる。それ以外は区別できない感じ
+  #
+  # レートリミットは10 req/min程度の印象
   def avatar_content(guest_token, user_ids)
     header = common_header(guest_token).merge({
       "Cookie" => "auth_token=#{ENV["AUTH_TOKEN"]}"
