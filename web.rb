@@ -86,6 +86,10 @@ post "/api/v1/twitter_space/bulk_check" do
       stream = space.live_video_stream(token, media_key)
       stream_url = stream["source"]["location"]
 
+      periscope = space.authenticate_periscope(token)
+      periscope_cookie = space.periscope_login(periscope["token"])
+      chat = space.access_chat(periscope_cookie["cookie"], stream["chatToken"])
+
       {
         "online" => true,
         "user_id" => space_metadata["creator_results"]["result"]["rest_id"],
@@ -94,6 +98,7 @@ post "/api/v1/twitter_space/bulk_check" do
         "media_key" => media_key,
         "live_title" => space_metadata["title"],
         "stream_url" => stream_url,
+        "chat_access_token" => chat["access_token"],
         "space_metadata" => space_metadata,
       }
     end
@@ -145,6 +150,10 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   stream = space.live_video_stream(token, media_key)
   stream_url = stream["source"]["location"]
 
+  periscope = space.authenticate_periscope(token)
+  periscope_cookie = space.periscope_login(periscope["token"])
+  chat = space.access_chat(periscope_cookie["cookie"], stream["chatToken"])
+
   {
     "online" => true,
     "user_id" => user_id,
@@ -153,6 +162,7 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     "media_key" => media_key,
     "live_title" => space_metadata["title"],
     "stream_url" => stream_url,
+    "chat_access_token" => chat["access_token"],
     "space_metadata" => space_metadata,
   }.to_json
 end
