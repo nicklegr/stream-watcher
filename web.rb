@@ -58,47 +58,47 @@ get "/api/v1/mildom/:user_id" do
 end
 
 post "/api/v1/twitter_space/bulk_check" do
-  body = JSON.parse(request.body.read)
+  body = JSON.parse(request.body.read, symbolize_names: true)
 
   space = TwitterSpace.new
   token = space.guest_token()
 
   spaces = []
-  body["user_ids"].each_slice(100) do |slice|
+  body[:user_ids].each_slice(100) do |slice|
     content = space.avatar_content(token, slice)
-    spaces += content["users"].values
+    spaces += content[:users].values
   end
 
   # 複数のユーザーが同じスペースにいる場合があるのでuniq
-  spaces.uniq!{|e| e["spaces"]["live_content"]["audiospace"]["broadcast_id"]}
+  spaces.uniq!{|e| e[:spaces][:live_content][:audiospace][:broadcast_id]}
 
-  space_ids = spaces.map{|e| e["spaces"]["live_content"]["audiospace"]["broadcast_id"]}
+  space_ids = spaces.map{|e| e[:spaces][:live_content][:audiospace][:broadcast_id]}
 
   results = space_ids.map do |space_id|
     audio_space = space.audio_space_by_id(token, space_id)
 
-    space_metadata = audio_space["data"]["audioSpace"]["metadata"]
-    if space_metadata["state"] != "Running"
+    space_metadata = audio_space[:data][:audioSpace][:metadata]
+    if space_metadata[:state] != "Running"
       nil
     else
-      media_key = space_metadata["media_key"]
+      media_key = space_metadata[:media_key]
 
       stream = space.live_video_stream(token, media_key)
-      stream_url = stream["source"]["location"]
+      stream_url = stream[:source][:location]
 
       periscope = space.authenticate_periscope(token)
-      periscope_cookie = space.periscope_login(periscope["token"])
-      chat = space.access_chat(periscope_cookie["cookie"], stream["chatToken"])
+      periscope_cookie = space.periscope_login(periscope[:token])
+      chat = space.access_chat(periscope_cookie[:cookie], stream[:chatToken])
 
       {
         "online" => true,
-        "user_id" => space_metadata["creator_results"]["result"]["rest_id"],
-        "screen_name" => space_metadata["creator_results"]["result"]["legacy"]["screen_name"],
+        "user_id" => space_metadata[:creator_results][:result][:rest_id],
+        "screen_name" => space_metadata[:creator_results][:result][:legacy][:screen_name],
         "space_id" => space_id,
         "media_key" => media_key,
-        "live_title" => space_metadata["title"],
+        "live_title" => space_metadata[:title],
         "stream_url" => stream_url,
-        "chat_access_token" => chat["access_token"],
+        "chat_access_token" => chat[:access_token],
         "space_metadata" => space_metadata,
       }
     end
@@ -120,14 +120,14 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     if id_type == "screen_name"
       screen_name = params[:name_or_id]
       user = space.user_by_screen_name(token, screen_name)
-      user["data"]["user"]["rest_id"]
+      user[:data][:user][:rest_id]
     else
       params[:name_or_id]
     end
 
   content = space.avatar_content(token, [ user_id ])
-  if content["users"].size > 0
-    space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
+  if content[:users].size > 0
+    space_id = content[:users][user_id.to_sym][:spaces][:live_content][:audiospace][:broadcast_id]
   else
     return {
       "online" => false,
@@ -137,32 +137,32 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
 
   audio_space = space.audio_space_by_id(token, space_id)
 
-  space_metadata = audio_space["data"]["audioSpace"]["metadata"]
-  if space_metadata["state"] != "Running"
+  space_metadata = audio_space[:data][:audioSpace][:metadata]
+  if space_metadata[:state] != "Running"
     return {
       "online" => false,
       "user_id" => user_id,
     }.to_json
   end
 
-  media_key = space_metadata["media_key"]
+  media_key = space_metadata[:media_key]
 
   stream = space.live_video_stream(token, media_key)
-  stream_url = stream["source"]["location"]
+  stream_url = stream[:source][:location]
 
   periscope = space.authenticate_periscope(token)
-  periscope_cookie = space.periscope_login(periscope["token"])
-  chat = space.access_chat(periscope_cookie["cookie"], stream["chatToken"])
+  periscope_cookie = space.periscope_login(periscope[:token])
+  chat = space.access_chat(periscope_cookie[:cookie], stream[:chatToken])
 
   {
     "online" => true,
     "user_id" => user_id,
-    "screen_name" => space_metadata["creator_results"]["result"]["legacy"]["screen_name"],
+    "screen_name" => space_metadata[:creator_results][:result][:legacy][:screen_name],
     "space_id" => space_id,
     "media_key" => media_key,
-    "live_title" => space_metadata["title"],
+    "live_title" => space_metadata[:title],
     "stream_url" => stream_url,
-    "chat_access_token" => chat["access_token"],
+    "chat_access_token" => chat[:access_token],
     "space_metadata" => space_metadata,
   }.to_json
 end

@@ -11,12 +11,12 @@ Dotenv.load
 class TwitterSpace
   def get_json(url, header, params = {}, body = "")
     res = Https.get(url, header, params, body)
-    JSON.parse(res)
+    JSON.parse(res, symbolize_names: true)
   end
 
   def post_json(url, header, params = {}, body = "")
     res = Https.post(url, header, params, body)
-    JSON.parse(res)
+    JSON.parse(res, symbolize_names: true)
   end
 
   def common_header(guest_token)
@@ -35,7 +35,7 @@ class TwitterSpace
     }
 
     res = post_json("https://api.twitter.com/1.1/guest/activate.json", header)
-    res["guest_token"].to_s
+    res[:guest_token].to_s
   end
 
   def user_by_screen_name(guest_token, screen_name)
@@ -206,13 +206,13 @@ if $0 == __FILE__
 
   user = space.user_by_screen_name(token, screen_name)
 # pp user
-  user_id = user["data"]["user"]["rest_id"]
+  user_id = user[:data][:user][:rest_id]
   puts "user_id: #{user_id}"
 
   content = space.avatar_content(token, [ user_id ])
 # pp content
-  if content["users"].size > 0
-    space_id = content["users"][user_id]["spaces"]["live_content"]["audiospace"]["broadcast_id"]
+  if content[:users].size > 0
+    space_id = content[:users][user_id.to_sym][:spaces][:live_content][:audiospace][:broadcast_id]
     puts "space_id: #{space_id}"
   else
     puts "space offline"
@@ -222,34 +222,34 @@ if $0 == __FILE__
   audio_space = space.audio_space_by_id(token, space_id)
 # pp audio_space
 
-  space_metadata = audio_space["data"]["audioSpace"]["metadata"]
+  space_metadata = audio_space[:data][:audioSpace][:metadata]
 # pp space_metadata
-  if space_metadata["state"] == "Ended"
+  if space_metadata[:state] == "Ended"
     puts "space ended"
     exit(0)
   end
 
-  media_key = space_metadata["media_key"]
+  media_key = space_metadata[:media_key]
   puts "media_key: #{media_key}"
 
   stream = space.live_video_stream(token, media_key)
 # pp stream
-  url = stream["source"]["location"]
+  url = stream[:source][:location]
   puts "stream_url: #{url}"
-  puts "chat_token: #{stream["chatToken"]}"
+  puts "chat_token: #{stream[:chatToken]}"
 
   periscope = space.authenticate_periscope(token)
-  puts "periscope_token: #{periscope["token"]}"
+  puts "periscope_token: #{periscope[:token]}"
 
-  periscope_cookie = space.periscope_login(periscope["token"])
-  puts "periscope_cookie: #{periscope_cookie["cookie"]}"
+  periscope_cookie = space.periscope_login(periscope[:token])
+  puts "periscope_cookie: #{periscope_cookie[:cookie]}"
 
-#   ret = space.start_public(token, stream["lifecycleToken"])
+#   ret = space.start_public(token, stream[:lifecycleToken])
 # pp ret
 # user_id_cookie, session = ret
 
 #   space.stop_public(token, user_id_cookie, session)
 
-  chat = space.access_chat(periscope_cookie["cookie"], stream["chatToken"])
-  puts "chat_access_token: #{chat["access_token"]}"
+  chat = space.access_chat(periscope_cookie[:cookie], stream[:chatToken])
+  puts "chat_access_token: #{chat[:access_token]}"
 end
