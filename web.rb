@@ -114,18 +114,19 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   space = TwitterSpace.new
   token = space.guest_token()
 
-  user_id =
-    if id_type == "screen_name"
-      screen_name = params[:name_or_id]
-      user = space.user_by_screen_name(token, screen_name)
-      user[:data][:user][:rest_id]
-    else
-      params[:name_or_id]
-    end
+  user_id = ""
+  if id_type == "screen_name"
+    screen_name = params[:name_or_id]
+    user = space.user_by_screen_name(token, screen_name)
+    user => {data: {user: {rest_id: user_id}}}
+  else
+    user_id = params[:name_or_id]
+  end
 
   content = space.avatar_content(token, [ user_id ])
   if content[:users].size > 0
-    space_id = content[:users][user_id.to_sym][:spaces][:live_content][:audiospace][:broadcast_id]
+    data = content[:users][user_id.to_sym]
+    data => {spaces: {live_content: {audiospace: {broadcast_id: space_id}}}}
   else
     return {
       "online" => false,
@@ -134,19 +135,26 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   end
 
   audio_space = space.audio_space_by_id(token, space_id)
+  audio_space => {data: {audioSpace: {metadata: space_metadata}}}
 
-  space_metadata = audio_space[:data][:audioSpace][:metadata]
-  if space_metadata[:state] != "Running"
+  # タイトルがないときはキー自体が存在しないので追加
+  space_metadata[:title] ||= ""
+  space_metadata => {
+    state:,
+    media_key:,
+    creator_results: {result: {legacy: {screen_name: }}},
+    title:,
+  }
+
+  if state != "Running"
     return {
       "online" => false,
       "user_id" => user_id,
     }.to_json
   end
 
-  media_key = space_metadata[:media_key]
-
   stream = space.live_video_stream(token, media_key)
-  stream_url = stream[:source][:location]
+  stream => {source: {location: stream_url}}
 
   periscope = space.authenticate_periscope(token)
   periscope_cookie = space.periscope_login(periscope[:token])
@@ -155,10 +163,10 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   {
     "online" => true,
     "user_id" => user_id,
-    "screen_name" => space_metadata[:creator_results][:result][:legacy][:screen_name],
+    "screen_name" => screen_name,
     "space_id" => space_id,
     "media_key" => media_key,
-    "live_title" => space_metadata[:title],
+    "live_title" => title,
     "stream_url" => stream_url,
     "chat_access_token" => chat[:access_token],
     "space_metadata" => space_metadata,
