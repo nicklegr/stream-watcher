@@ -70,9 +70,7 @@ post "/api/v1/twitter_space/bulk_check" do
   end
 
   # 複数のユーザーが同じスペースにいる場合があるのでuniq
-  spaces.uniq!{|e| e[:spaces][:live_content][:audiospace][:broadcast_id]}
-
-  space_ids = spaces.map{|e| e[:spaces][:live_content][:audiospace][:broadcast_id]}
+  space_ids = spaces.map{|e| e[:spaces][:live_content][:audiospace][:broadcast_id]}.uniq
 
   results = space_ids.map do |space_id|
     audio_space = space.audio_space_by_id(token, space_id)
