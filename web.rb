@@ -74,15 +74,22 @@ post "/api/v1/twitter_space/bulk_check" do
 
   results = space_ids.map do |space_id|
     audio_space = space.audio_space_by_id(token, space_id)
+    audio_space => {data: {audioSpace: {metadata: space_metadata}}}
 
-    space_metadata = audio_space[:data][:audioSpace][:metadata]
-    if space_metadata[:state] != "Running"
+    # タイトルがないときはキー自体が存在しないので追加
+    space_metadata[:title] ||= ""
+    space_metadata => {
+      state:,
+      media_key:,
+      creator_results: {result: {rest_id: user_id, legacy: {screen_name: }}},
+      title:,
+    }
+
+    if state != "Running"
       nil
     else
-      media_key = space_metadata[:media_key]
-
       stream = space.live_video_stream(token, media_key)
-      stream_url = stream[:source][:location]
+      stream => {source: {location: stream_url}}
 
       periscope = space.authenticate_periscope(token)
       periscope_cookie = space.periscope_login(periscope[:token])
@@ -90,11 +97,11 @@ post "/api/v1/twitter_space/bulk_check" do
 
       {
         "online" => true,
-        "user_id" => space_metadata[:creator_results][:result][:rest_id],
-        "screen_name" => space_metadata[:creator_results][:result][:legacy][:screen_name],
+        "user_id" => user_id,
+        "screen_name" => screen_name,
         "space_id" => space_id,
         "media_key" => media_key,
-        "live_title" => space_metadata[:title],
+        "live_title" => title,
         "stream_url" => stream_url,
         "chat_access_token" => chat[:access_token],
         "space_metadata" => space_metadata,
