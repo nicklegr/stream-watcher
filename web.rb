@@ -58,6 +58,8 @@ get "/api/v1/mildom/:user_id" do
 end
 
 post "/api/v1/twitter_space/bulk_check" do
+  content_type "application/json"
+
   begin
     begin
       body = JSON.parse(request.body.read, symbolize_names: true)
@@ -122,18 +124,16 @@ post "/api/v1/twitter_space/bulk_check" do
       end
     end
 
-    content_type "application/json"
     results.compact.to_json
   rescue NoMatchingPatternError, KeyError => e
-    content_type "application/json"
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
 end
 
 get "/api/v1/twitter_space/:id_type/:name_or_id" do
-  begin
-    content_type "application/json"
+  content_type "application/json"
 
+  begin
     unless params in {id_type: "screen_name" | "user_id" => id_type, name_or_id: }
       return [400, {error: "Invalid request param"}.to_json]
     end
@@ -198,7 +198,6 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       "space_metadata" => space_metadata,
     }.to_json
   rescue NoMatchingPatternError, KeyError => e
-    content_type "application/json"
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
 end
