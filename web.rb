@@ -59,8 +59,15 @@ end
 
 post "/api/v1/twitter_space/bulk_check" do
   begin
-    body = JSON.parse(request.body.read, symbolize_names: true)
-    body => {user_ids: }
+    begin
+      body = JSON.parse(request.body.read, symbolize_names: true)
+    rescue JSON::ParserError => e
+      return [400, {error: "Invalid request param: #{e.message}"}.to_json]
+    end
+
+    unless body in {user_ids: Array => user_ids}
+      return [400, {error: "Invalid request param"}.to_json]
+    end
 
     space = TwitterSpace.new
     token = space.guest_token()
@@ -127,18 +134,19 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   begin
     content_type "application/json"
 
-    id_type = params.fetch(:id_type)
+    unless params in {id_type: "screen_name" | "user_id" => id_type, name_or_id: }
+      return [400, {error: "Invalid request param"}.to_json]
+    end
 
     space = TwitterSpace.new
     token = space.guest_token()
 
-    user_id = ""
     if id_type == "screen_name"
-      screen_name = params.fetch(:name_or_id)
+      screen_name = name_or_id
       user = space.user_by_screen_name(token, screen_name)
       user => {data: {user: {rest_id: user_id}}}
     else
-      user_id = params.fetch(:name_or_id)
+      user_id = name_or_id
     end
 
     content = space.avatar_content(token, [ user_id ])
