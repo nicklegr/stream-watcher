@@ -60,12 +60,13 @@ end
 post "/api/v1/twitter_space/bulk_check" do
   begin
     body = JSON.parse(request.body.read, symbolize_names: true)
+    body => {user_ids: }
 
     space = TwitterSpace.new
     token = space.guest_token()
 
     spaces = []
-    body[:user_ids].each_slice(100) do |slice|
+    user_ids.each_slice(100) do |slice|
       content = space.avatar_content(token, slice)
       spaces += content[:users].values
     end
@@ -94,11 +95,11 @@ post "/api/v1/twitter_space/bulk_check" do
         nil
       else
         stream = space.live_video_stream(token, media_key)
-        stream => {source: {location: stream_url}}
+        stream => {chatToken:, source: {location: stream_url}}
 
         periscope = space.authenticate_periscope(token)
         periscope_cookie = space.periscope_login(periscope[:token])
-        chat = space.access_chat(periscope_cookie[:cookie], stream[:chatToken])
+        chat = space.access_chat(periscope_cookie[:cookie], chatToken)
 
         {
           "online" => true,
@@ -171,11 +172,11 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     end
 
     stream = space.live_video_stream(token, media_key)
-    stream => {source: {location: stream_url}}
+    stream => {chatToken:, source: {location: stream_url}}
 
     periscope = space.authenticate_periscope(token)
     periscope_cookie = space.periscope_login(periscope[:token])
-    chat = space.access_chat(periscope_cookie[:cookie], stream[:chatToken])
+    chat = space.access_chat(periscope_cookie[:cookie], chatToken)
 
     {
       "online" => true,
