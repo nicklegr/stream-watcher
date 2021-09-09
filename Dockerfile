@@ -1,4 +1,4 @@
-FROM ruby:2.7.1
+FROM ruby:3.0.2
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 
