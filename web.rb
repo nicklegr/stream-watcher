@@ -125,6 +125,16 @@ post "/api/v1/twitter_space/bulk_check" do
     end
 
     results.compact.to_json
+  rescue Net::HTTPExceptions => e
+    res = e.response
+    [
+      res.code.to_i,
+      {
+        error: "API error",
+        code: res.code.to_i,
+        body: res.body,
+      }.to_json
+    ]
   rescue NoMatchingPatternError, KeyError => e
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
@@ -197,6 +207,16 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       "chat_access_token" => chat.fetch(:access_token),
       "space_metadata" => space_metadata,
     }.to_json
+  rescue Net::HTTPExceptions => e
+    res = e.response
+    [
+      res.code.to_i,
+      {
+        error: "API error",
+        code: res.code.to_i,
+        body: res.body,
+      }.to_json
+    ]
   rescue NoMatchingPatternError, KeyError => e
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
