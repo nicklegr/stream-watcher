@@ -68,7 +68,7 @@ post "/api/v1/twitter_space/bulk_check" do
     spaces = []
     user_ids.each_slice(100) do |slice|
       content = space.avatar_content(token, slice)
-      spaces += content[:users].values
+      spaces += content.fetch(:users).values
     end
 
     # 複数のユーザーが同じスペースにいる場合があるのでuniq
@@ -98,8 +98,8 @@ post "/api/v1/twitter_space/bulk_check" do
         stream => {chatToken:, source: {location: stream_url}}
 
         periscope = space.authenticate_periscope(token)
-        periscope_cookie = space.periscope_login(periscope[:token])
-        chat = space.access_chat(periscope_cookie[:cookie], chatToken)
+        periscope_cookie = space.periscope_login(periscope.fetch(:token))
+        chat = space.access_chat(periscope_cookie.fetch(:cookie), chatToken)
 
         {
           "online" => true,
@@ -109,7 +109,7 @@ post "/api/v1/twitter_space/bulk_check" do
           "media_key" => media_key,
           "live_title" => title,
           "stream_url" => stream_url,
-          "chat_access_token" => chat[:access_token],
+          "chat_access_token" => chat.fetch(:access_token),
           "space_metadata" => space_metadata,
         }
       end
@@ -117,7 +117,7 @@ post "/api/v1/twitter_space/bulk_check" do
 
     content_type "application/json"
     results.compact.to_json
-  rescue NoMatchingPatternError => e
+  rescue NoMatchingPatternError, KeyError => e
     content_type "application/json"
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
@@ -127,23 +127,23 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
   begin
     content_type "application/json"
 
-    id_type = params[:id_type]
+    id_type = params.fetch(:id_type)
 
     space = TwitterSpace.new
     token = space.guest_token()
 
     user_id = ""
     if id_type == "screen_name"
-      screen_name = params[:name_or_id]
+      screen_name = params.fetch(:name_or_id)
       user = space.user_by_screen_name(token, screen_name)
       user => {data: {user: {rest_id: user_id}}}
     else
-      user_id = params[:name_or_id]
+      user_id = params.fetch(:name_or_id)
     end
 
     content = space.avatar_content(token, [ user_id ])
-    if content[:users].size > 0
-      data = content[:users][user_id.to_sym]
+    if content.fetch(:users).size > 0
+      data = content.dig(:users, user_id.to_sym)
       data => {spaces: {live_content: {audiospace: {broadcast_id: space_id}}}}
     else
       return {
@@ -175,8 +175,8 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     stream => {chatToken:, source: {location: stream_url}}
 
     periscope = space.authenticate_periscope(token)
-    periscope_cookie = space.periscope_login(periscope[:token])
-    chat = space.access_chat(periscope_cookie[:cookie], chatToken)
+    periscope_cookie = space.periscope_login(periscope.fetch(:token))
+    chat = space.access_chat(periscope_cookie.fetch(:cookie), chatToken)
 
     {
       "online" => true,
@@ -186,10 +186,10 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       "media_key" => media_key,
       "live_title" => title,
       "stream_url" => stream_url,
-      "chat_access_token" => chat[:access_token],
+      "chat_access_token" => chat.fetch(:access_token),
       "space_metadata" => space_metadata,
     }.to_json
-  rescue NoMatchingPatternError => e
+  rescue NoMatchingPatternError, KeyError => e
     content_type "application/json"
     [500, {error: "JSON parse failed: #{e.message}"}.to_json]
   end
