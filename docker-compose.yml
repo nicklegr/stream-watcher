@@ -8,6 +8,7 @@ services:
     environment:
       VIRTUAL_HOST: ${VIRTUAL_HOST}
       PORT: "8080"
+      RACK_ENV: production
       LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
       # LETSENCRYPT_TEST: "true"
