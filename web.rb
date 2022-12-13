@@ -120,6 +120,8 @@ post "/api/v1/twitter_space/bulk_check" do
           "stream_url" => stream_url,
           "chat_access_token" => chat.fetch(:access_token),
           "space_metadata" => space_metadata,
+
+          "audio_space" => audio_space,
         }
       end
     end
@@ -206,6 +208,10 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
       "stream_url" => stream_url,
       "chat_access_token" => chat.fetch(:access_token),
       "space_metadata" => space_metadata,
+
+      "avatar_content" => content,
+      "audio_space" => audio_space,
+      "live_video_stream" => stream,
     }.to_json
   rescue Net::HTTPExceptions => e
     res = e.response
