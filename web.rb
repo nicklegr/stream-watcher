@@ -93,12 +93,19 @@ post "/api/v1/twitter_space/bulk_check" do
 
       # タイトルがないときはキー自体が存在しないので追加
       space_metadata[:title] ||= ""
-      space_metadata => {
-        state:,
-        media_key:,
-        creator_results: {result: {rest_id: user_id, legacy: {screen_name: }}},
-        title:,
-      }
+
+      begin
+        space_metadata => {
+          state:,
+          media_key:,
+          creator_results: {result: {rest_id: user_id, legacy: {screen_name: }}},
+          title:,
+        }
+      rescue NoMatchingPatternError
+        # 鍵垢の配信だとcreator_resultsの中が取得できない
+        # media_keyは取得できてるから頑張れば録音できるかも
+        next nil
+      end
 
       if state != "Running"
         nil
@@ -177,12 +184,23 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
 
     # タイトルがないときはキー自体が存在しないので追加
     space_metadata[:title] ||= ""
-    space_metadata => {
-      state:,
-      media_key:,
-      creator_results: {result: {legacy: {screen_name: }}},
-      title:,
-    }
+
+    begin
+      space_metadata => {
+        state:,
+        media_key:,
+        creator_results: {result: {legacy: {screen_name: }}},
+        title:,
+      }
+    rescue NoMatchingPatternError
+      # 鍵垢の配信だとcreator_resultsの中が取得できない
+      # media_keyは取得できてるから頑張れば録音できるかも
+      return {
+        "online" => true,
+        "user_id" => user_id,
+        "protected" => true,
+      }.to_json
+    end
 
     if state != "Running"
       return {
