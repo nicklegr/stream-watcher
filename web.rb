@@ -57,6 +57,61 @@ get "/api/v1/mildom/:user_id" do
   ret.to_json
 end
 
+get "/api/v1/spoon/:user_id" do |user_id|
+  res = Https.get("https://jp-api.spooncast.net/users/#{user_id}/", {}, params)
+
+  data = JSON.parse(res, symbolize_names: true)
+  data => {status_code:, detail:}
+
+  if status_code != 200
+    return [500, {error: "spoon users api error", code: status_code, detail: detail}.to_json]
+  end
+
+  data => {results: [{current_live:, id:, tag:, nickname:, description:, profile_url:}, *]}
+
+  ret_common = {
+    user_id: id,
+    screen_name: tag,
+    nickname: nickname,
+    description: description,
+    profile_url: profile_url,
+    raw_response: data[:results].first
+  }
+
+  ret_live = {}
+  if current_live
+    current_live => {id: live_id}
+    live_res = Https.get("https://jp-api.spooncast.net/lives/#{live_id}/", {}, params)
+    live_data = JSON.parse(live_res, symbolize_names: true)
+    live_data => {status_code:, detail:}
+    if status_code != 200
+      return [500, {error: "spoon live api error", code: status_code, detail: detail}.to_json]
+    end
+
+    live_data => {results: [{title:, stream_name:, url_hls:, img_url:}, *]}
+    ret_live = {
+      live_title: title,
+      stream_id: stream_name,
+      stream_url: url_hls,
+      img_url: img_url,
+      live_raw_response: live_data[:results].first,
+    }
+  end
+
+  ret = if current_live
+    {
+      online: true,
+    }.merge(ret_common, ret_live)
+  else
+    {
+      online: false,
+    }.merge(ret_common)
+  end
+
+  content_type "application/json"
+  ret.to_json
+end
+
 post "/api/v1/twitter_space/bulk_check" do
   content_type "application/json"
 
