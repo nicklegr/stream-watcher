@@ -22,10 +22,14 @@ class TwitterSpace
   def common_header(guest_token)
     {
       "authorization" => ENV["TWITTER_PUBLIC_TOKEN"],
-      "x-csrf-token" => "0",
-      "x-guest-token" => guest_token.to_s,
       "x-twitter-active-user" => "yes",
       "x-twitter-client-language" => "ja",
+      "Cookie" => [
+        "auth_token=#{ENV["AUTH_TOKEN"]}",
+        "ct0=#{ENV["CT0"]}",
+      ].join(";"),
+      "x-csrf-token" => ENV["CT0"],
+      "x-twitter-auth-type" => "OAuth2Session",
     }
   end
 

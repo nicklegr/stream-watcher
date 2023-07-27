@@ -127,7 +127,7 @@ post "/api/v1/twitter_space/bulk_check" do
     end
 
     space = TwitterSpace.new
-    token = space.guest_token()
+    token = "" # space.guest_token()はForbiddenを返すようになったので使用しない
 
     spaces = []
     user_ids.each_slice(100) do |slice|
@@ -213,7 +213,7 @@ get "/api/v1/twitter_space/:id_type/:name_or_id" do
     end
 
     space = TwitterSpace.new
-    token = space.guest_token()
+    token = "" # space.guest_token()はForbiddenを返すようになったので使用しない
 
     if id_type == "screen_name"
       screen_name = name_or_id
